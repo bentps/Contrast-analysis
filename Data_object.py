@@ -10,6 +10,23 @@ import numpy as np
 
 #changed Time dict to signals dict
 
+#hack to take subset of data. This is to make sure that he data consists of an
+#integer number of oscillations.
+
+#The contrast signals have 2500 voltage datapoints with .2us time step between data points.
+
+#8/(.2E-6*8*omegarec)=1346.57   #peaks/(stepsize*freq) 
+#2500-300-853=1347
+
+#Use this if you want exactly 8 oscillations.
+CutFromStart=300
+CutFromEnd=853 
+
+#Use this if you want the whole dataset. Note that usuing a non-integer number
+#of oscillations leads to a systematic in the fitting.
+#CutFromStart=0
+#CutFromEnd=0 
+
 class Data:
     def __init__(self, date, N):
         self.date=date
@@ -22,9 +39,9 @@ class Data:
 #this is the standard CSV import function, returning a numpy array of the oscilliscope voltage (signal) and time (timebase).
     def csv(self, filename):
         the_data = pd.read_csv(filename, names=['a','b','c','d','e'])
-        timebase=[i for i in the_data.c]
+        timebase=[i for i in the_data.c][CutFromStart:2500-CutFromEnd]
         timebase=np.array(timebase)
-        signal=[i for i in the_data.d]
+        signal=[i for i in the_data.d][CutFromStart:2500-CutFromEnd]
         signal=np.array(signal)
         return timebase, signal
 
@@ -43,13 +60,13 @@ class Data:
         if twoT in self.avg_signal.keys():
             sumdata=self.avg_signal[twoT][1]*(last-first-len(skiplist))
         else:
-            sumdata=[0]*2500
+            sumdata=[0]*(2500-CutFromStart-CutFromEnd)
         if twoT in self.avg_bragg_dict.keys():
             sumbragg1=self.avg_bragg_dict[twoT][1]*(last-first-len(skiplist))
             sumbragg2=self.avg_bragg_dict[twoT][2]*(last-first-len(skiplist))
         else:
-            sumbragg1=[0]*2500
-            sumbragg2=[0]*2500         
+            sumbragg1=[0]*(2500-CutFromStart-CutFromEnd)
+            sumbragg2=[0]*(2500-CutFromStart-CutFromEnd)         
         for i in range(first,last):
             if i not in skiplist:
                 if i<10:
